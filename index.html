@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>علام AI سمارت - نظام حجز الشحن البحري</title>
+<style>
+:root{
+  --navy:#0B2D4D;
+  --navy2:#164A75;
+  --navy2:#123E66;
+  --bg:#F4F7FA;
+  --card:#FFFFFF;
+  --green:#1F7A4D;
+  --border:#D8E0E8;
+  --text:#17202A;
+  --muted:#667788;
+  --warn:#B7791F;
+}
+*{box-sizing:border-box}
+body{
+  direction:rtl;
+  text-align:right;
+  margin:0;
+  font-family:Tahoma,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.app{
+  max-width:520px;
+  margin:0 auto;
+  min-height:100vh;
+  background:var(--bg);
+}
+.header{
+  background:linear-gradient(135deg,var(--navy),var(--navy2));
+  color:#fff;
+  padding:22px 18px 18px;
+  position:sticky;
+  top:0;
+  z-index:5;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);
+}
+.brand{font-size:24px;font-weight:700}
+.subtitle{font-size:13px;opacity:.9;margin-top:4px}
+.page{display:none;padding:16px 14px 95px}
+.page.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:18px 14px;
+  box-shadow:0 3px 12px rgba(11,45,77,.06);
+}
+.menu-card{min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer}
+.icon{font-size:30px;margin-bottom:8px}
+.menu-title{font-weight:700}
+.stat{font-size:28px;color:var(--navy);font-weight:700}
+label{display:block;font-weight:700;margin:14px 0 7px}
+input,select,textarea{
+  width:100%;
+  padding:13px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  font-size:16px;
+}
+textarea{min-height:90px;resize:vertical}
+.btn{
+  width:100%;
+  border:0;
+  border-radius:12px;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:12px;
+}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-light{background:#EAF1F7;color:var(--navy)}
+.btn-warn{background:#FFF4D6;color:#7A5600}
+.section-title{font-size:18px;font-weight:700;color:var(--navy);margin:4px 0 12px}
+.upload{
+  border:2px dashed #B8C7D6;
+  border-radius:14px;
+  padding:14px;
+  margin-top:10px;
+  background:#FBFCFE;
+}
+.upload small{color:var(--muted)}
+.file-list{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.file-chip{
+  background:#EAF1F7;color:var(--navy);border-radius:999px;
+  padding:6px 9px;font-size:12px;max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap
+}
+.extract-note{
+  margin-top:10px;padding:10px;border-radius:10px;
+  background:#FFF4D6;color:#7A5600;font-size:13px;line-height:1.6
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.badge{
+  display:inline-block;padding:5px 9px;border-radius:999px;
+  font-size:12px;font-weight:700
+}
+.badge-new{background:#E9F2FB;color:var(--navy)}
+.badge-sent{background:#DDF3E7;color:var(--green)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mini-btn{
+  border:0;border-radius:9px;padding:7px 10px;font-size:12px;
+  font-weight:700;cursor:pointer
+}
+.mini-edit{background:#EAF1F7;color:var(--navy)}
+.mini-delete{background:#FDE8E8;color:#9B1C1C}
+.filename-box{
+  background:#fff;border:1px solid var(--border);border-radius:14px;
+  padding:12px;margin-bottom:12px
+}
+.booking{
+  display:flex;align-items:center;gap:10px;
+  background:#fff;border:1px solid var(--border);
+  border-radius:14px;padding:12px;margin-bottom:10px
+}
+.booking .info{flex:1}
+.booking .title{font-weight:700}
+.booking .meta{color:var(--muted);font-size:13px;margin-top:4px}
+.bottom-nav{
+  position:fixed;
+  bottom:0;left:50%;transform:translateX(-50%);
+  width:min(520px,100%);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:#FFFFFF;border-top:1px solid var(--border);
+  box-shadow:0 -2px 10px rgba(0,0,0,.06);
+}
+.nav-item{padding:10px 4px;text-align:center;font-size:12px;cursor:pointer;color:var(--muted)}
+.nav-item b{display:block;font-size:20px;margin-bottom:2px}
+.nav-item.active{color:var(--navy);font-weight:700}
+.notice{
+  padding:12px;border-radius:12px;background:#EEF5FB;color:var(--navy);
+  font-size:14px;margin-bottom:12px
+}
+.hidden{display:none}
+hr{border:0;border-top:1px solid var(--border);margin:18px 0}
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand">علام AI سمارت</div>
+    <div class="subtitle">نظام حجز الشحن البحري</div>
+  </header>
+
+
+  <main id="login" class="page active">
+    <div class="card" style="margin-top:18px">
+      <div class="section-title">تسجيل الدخول</div>
+      <div class="notice">سجّل الدخول بحساب المستخدم الذي أنشأته في Supabase.</div>
+      <label>البريد الإلكتروني</label>
+      <input id="loginEmail" type="email" autocomplete="username" placeholder="example@email.com">
+      <label>كلمة المرور</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+      <button class="btn btn-primary" onclick="login()">دخول</button>
+      <div id="loginMessage" class="extract-note hidden"></div>
+    </div>
+  </main>
+
+  <main id="home" class="page">
+    <div class="notice">هذه نسخة أولية قابلة للتجربة على الهاتف.</div>
+    <div class="grid">
+      <div class="card menu-card" onclick="showPage('new')">
+        <div class="icon">➕</div><div class="menu-title">حجز جديد</div>
+      </div>
+      <div class="card menu-card" onclick="showPage('bookings')">
+        <div class="icon">📋</div><div class="menu-title">كل الحجوزات</div>
+      </div>
+      <div class="card menu-card" onclick="showPage('export')">
+        <div class="icon">📤</div><div class="menu-title">ملف الوكيل</div>
+      </div>
+      <div class="card menu-card" onclick="showPage('search')">
+        <div class="icon">🔎</div><div class="menu-title">بحث وتعديل</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="section-title">حفظ واستعادة البيانات</div>
+      <button class="btn btn-light" onclick="downloadBackup()">تنزيل نسخة احتياطية</button>
+      <label class="btn btn-light" style="display:block;text-align:center;cursor:pointer">
+        استعادة نسخة احتياطية
+        <input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restoreBackup(event)">
+      </label>
+      <div class="extract-note">
+        تحفظ الحجوزات على الهاتف تلقائيًا. وننصح بتنزيل نسخة احتياطية في نهاية كل يوم.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="section-title">ملخص سريع</div>
+      <div class="row">
+        <div><div class="stat" id="countAll">0</div><small>إجمالي الحجوزات</small></div>
+        <div><div class="stat" id="countNew">0</div><small>غير مرسلة</small></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <button class="btn btn-light" onclick="logout()">تسجيل الخروج</button>
+    </div>
+  </main>
+
+  <main id="new" class="page">
+    <div class="section-title">حجز جديد</div>
+    <div class="card">
+      <label>اسم الرحلة</label>
+      <input id="trip" placeholder="مثال: البسام 32">
+
+      <label>رقم البيان الجمركي</label>
+      <input id="declaration" inputmode="numeric" placeholder="ألصق الرقم من رسالة الوكيل">
+
+      <div class="upload">
+        <b>📄 بيان الإمارات</b><br>
+        <small>يمكن رفع أكثر من بيان لاستخراج الشاحن والمستلم والوصف والوزن</small>
+        <input id="uaeFiles" type="file" accept="image/*,.pdf" multiple onchange="showFiles('uaeFiles','uaeFileList')">
+        <div id="uaeFileList" class="file-list"></div>
+      </div>
+      <div class="upload">
+        <b>🚛 استمارة السيارة</b><br>
+        <small>يمكن رفع أكثر من صورة لاستخراج رقم الهيكل ورقم اللوحة</small>
+        <input id="registrationFiles" type="file" accept="image/*,.pdf" multiple onchange="showFiles('registrationFiles','registrationFileList')">
+        <div id="registrationFileList" class="file-list"></div>
+      </div>
+      <div class="upload">
+        <b>🛂 جواز السائق</b><br>
+        <small>لاستخراج رقم الجواز واسم السائق</small>
+        <input id="passportFiles" type="file" accept="image/*,.pdf" onchange="showFiles('passportFiles','passportFileList')">
+        <div id="passportFileList" class="file-list"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="mockExtract()">استخراج البيانات</button>
+      <div class="extract-note">
+        ارفع المستندات ثم اضغط استخراج البيانات. ستظهر النتائج للمراجعة قبل الحفظ.
+      </div>
+    </div>
+
+    <div id="reviewCard" class="card hidden" style="margin-top:12px">
+      <div class="section-title">مراجعة البيانات</div>
+      <label>الشاحن</label><input id="shipper">
+      <label>المستلم</label><input id="consignee">
+      <label>وصف البضاعة</label><textarea id="goods"></textarea>
+      <div class="row">
+        <div><label>الوزن</label><input id="weight" inputmode="decimal"></div>
+        <div><label>رقم اللوحة</label><input id="plate"></div>
+      </div>
+      <label>رقم الهيكل</label><input id="vin">
+      <div class="row">
+        <div><label>رقم الجواز</label><input id="passport"></div>
+        <div><label>اسم السائق</label><input id="driver"></div>
+      </div>
+      <label style="font-weight:400"><input id="sameName" type="checkbox" style="width:auto" onchange="copyDriver()"> اسم السائق هو نفسه الشاحن</label>
+      <label>ملاحظات</label><textarea id="notes"></textarea>
+      <button class="btn btn-green" onclick="saveBooking()">حفظ الحجز</button>
+    </div>
+  </main>
+
+  <main id="bookings" class="page">
+    <div class="section-title">الحجوزات الرئيسية</div>
+    <div class="notice">هذا هو الملف الشامل لكل الحجوزات. يمكنك تعديل أي حجز أو حذفه من هنا.</div>
+    <div id="bookingsList"></div>
+  </main>
+
+  <main id="edit" class="page">
+    <div class="section-title">تعديل الحجز</div>
+    <div class="card">
+      <input type="hidden" id="editId">
+      <label>اسم الرحلة</label><input id="editTrip">
+      <label>رقم البيان</label><input id="editDeclaration">
+      <label>الشاحن</label><input id="editShipper">
+      <label>المستلم</label><input id="editConsignee">
+      <label>وصف البضاعة</label><textarea id="editGoods"></textarea>
+      <div class="row">
+        <div><label>الوزن</label><input id="editWeight"></div>
+        <div><label>رقم اللوحة</label><input id="editPlate"></div>
+      </div>
+      <label>رقم الهيكل</label><input id="editVin">
+      <div class="row">
+        <div><label>رقم الجواز</label><input id="editPassport"></div>
+        <div><label>اسم السائق</label><input id="editDriver"></div>
+      </div>
+      <label>ملاحظات</label><textarea id="editNotes"></textarea>
+      <button class="btn btn-green" onclick="saveEdit()">حفظ التعديل</button>
+      <button class="btn btn-light" onclick="showPage('bookings')">إلغاء</button>
+    </div>
+  </main>
+
+  <main id="export" class="page">
+    <div class="section-title">إنشاء ملف الوكيل</div>
+    <div class="notice">حدد الحجوزات المراد إرسالها، ثم اكتب اسم الملف قبل التصدير.</div>
+    <div class="filename-box">
+      <label style="margin-top:0">اسم ملف الوكيل</label>
+      <input id="exportFileName" value="حجوزات الوكيل" placeholder="مثال: حجوزات البسام 32">
+    </div>
+    <div id="exportList"></div>
+    <button class="btn btn-green" onclick="exportSelected(false)">تنزيل ملف الوكيل Excel</button>
+    <button class="btn btn-primary" onclick="exportSelected(true)">مشاركة الملف عبر واتساب أو الإيميل</button>
+  </main>
+
+  <main id="search" class="page">
+    <div class="section-title">بحث وتعديل</div>
+    <input id="searchInput" placeholder="ابحث برقم البيان أو الهيكل أو اللوحة أو السائق" oninput="renderSearch()">
+    <div id="searchList" style="margin-top:12px"></div>
+  </main>
+
+  <nav id="bottomNav" class="bottom-nav hidden">
+    <div class="nav-item active" data-page="home" onclick="showPage('home')"><b>🏠</b>الرئيسية</div>
+    <div class="nav-item" data-page="new" onclick="showPage('new')"><b>➕</b>حجز جديد</div>
+    <div class="nav-item" data-page="bookings" onclick="showPage('bookings')"><b>📋</b>الحجوزات</div>
+    <div class="nav-item" data-page="export" onclick="showPage('export')"><b>📤</b>التصدير</div>
+  </nav>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://gtbmaoegtysnhnrpuqvu.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_OQ4_jdvFhiYSwTR-rOim2g_O6d2wRoi';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+let bookings = [];
+let currentUser = null;
+
+function dbToUi(row){
+  return {
+    id: row.id,
+    date: row.created_at ? new Date(row.created_at).toLocaleDateString('ar-SA') : '',
+    trip: row.voyage || '',
+    declaration: row.declaration_number || '',
+    shipper: row.shipper || '',
+    consignee: row.consignee || '',
+    goods: row.goods_description || '',
+    weight: row.weight || '',
+    vin: row.chassis_number || '',
+    plate: row.plate_number || '',
+    passport: row.passport_number || '',
+    driver: row.driver_name || '',
+    notes: row.notes || '',
+    status: row.booking_status || 'جديد',
+    bookingType: row.booking_type || 'normal',
+    vesselName: row.vessel_name || '',
+    isExported: !!row.is_exported,
+    exportedAt: row.exported_at || null
+  };
+}
+
+function uiToDb(b){
+  return {
+    shipper: b.shipper || null,
+    consignee: b.consignee || null,
+    goods_description: b.goods || null,
+    weight: b.weight || null,
+    declaration_number: b.declaration || null,
+    chassis_number: b.vin || null,
+    plate_number: b.plate || null,
+    passport_number: b.passport || null,
+    driver_name: b.driver || null,
+    booking_type: b.bookingType || 'normal',
+    voyage: b.trip || null,
+    vessel_name: b.vesselName || null,
+    booking_status: b.status || 'جديد',
+    notes: b.notes || null,
+    is_exported: !!b.isExported,
+    exported_at: b.exportedAt || null,
+    updated_at: new Date().toISOString()
+  };
+}
+
+async function initApp(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session?.user){
+    currentUser = session.user;
+    document.getElementById('bottomNav').classList.remove('hidden');
+    await loadBookings();
+    showPage('home');
+  } else {
+    document.getElementById('bottomNav').classList.add('hidden');
+    showPage('login');
+  }
+}
+
+async function login(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMessage');
+  msg.classList.add('hidden');
+
+  if(!email || !password){
+    msg.textContent = 'أدخل البريد الإلكتروني وكلمة المرور.';
+    msg.classList.remove('hidden');
+    return;
+  }
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    msg.textContent = 'تعذر تسجيل الدخول: ' + error.message;
+    msg.classList.remove('hidden');
+    return;
+  }
+
+  currentUser = data.user;
+  document.getElementById('bottomNav').classList.remove('hidden');
+  await loadBookings();
+  showPage('home');
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser = null;
+  bookings = [];
+  document.getElementById('bottomNav').classList.add('hidden');
+  showPage('login');
+}
+
+async function loadBookings(){
+  const { data, error } = await sb
+    .from('bookings')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if(error){
+    alert('تعذر تحميل الحجوزات: ' + error.message);
+    return;
+  }
+  bookings = (data || []).map(dbToUi);
+  renderAll();
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const page = document.getElementById(id);
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===id));
+  renderAll();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function mockExtract(){
+  const groups = [
+    { inputId:'uaeFiles', category:'بيان الإمارات أو الفاتورة' },
+    { inputId:'registrationFiles', category:'استمارة السيارة' },
+    { inputId:'passportFiles', category:'جواز السائق' }
+  ];
+
+  const selected = [];
+  for (const group of groups){
+    const input = document.getElementById(group.inputId);
+    for (const file of input.files){
+      selected.push({ file, category: group.category });
+    }
+  }
+
+  if(!selected.length){
+    alert('أرفق مستندًا واحدًا على الأقل.');
+    return;
+  }
+
+  const btn = event?.target;
+  const oldText = btn?.textContent || 'استخراج البيانات';
+  if(btn){ btn.disabled = true; btn.textContent = 'جاري قراءة المستندات...'; }
+
+  try{
+    const files = [];
+    for (const item of selected){
+      files.push(await prepareFileForAI(item.file, item.category));
+    }
+
+    const totalBytes = files.reduce((sum,f)=>sum + Math.ceil((f.dataUrl?.length || 0) * 0.75), 0);
+    if(totalBytes > 4.2 * 1024 * 1024){
+      throw new Error('حجم الملفات كبير جدًا للقراءة دفعة واحدة. جرّب صورًا أوضح وأصغر، أو قلّل عدد الملفات في المحاولة الواحدة.');
+    }
+
+    const response = await fetch('/api/extract', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ files })
+    });
+
+    const result = await response.json();
+    if(!response.ok){
+      throw new Error(result.error || 'تعذر قراءة المستندات.');
+    }
+
+    const data = result.data || {};
+    setIfPresent('shipper', data.shipper);
+    setIfPresent('consignee', data.consignee);
+    setIfPresent('goods', data.goods_description);
+    setIfPresent('weight', data.weight);
+    setIfPresent('vin', data.chassis_number);
+    setIfPresent('plate', data.plate_number);
+    setIfPresent('passport', data.passport_number);
+    setIfPresent('driver', data.driver_name);
+
+    document.getElementById('reviewCard').classList.remove('hidden');
+    saveDraft();
+
+    const notes = Array.isArray(data.confidence_notes) ? data.confidence_notes.filter(Boolean) : [];
+    if(notes.length){
+      alert('تم استخراج البيانات. راجع الحقول قبل الحفظ. ملاحظات القراءة:\n- ' + notes.join('\n- '));
+    } else {
+      alert('تم استخراج البيانات تلقائيًا. راجعها قبل الحفظ ثم اضغط حفظ الحجز.');
+    }
+    window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+  }catch(e){
+    alert('تعذر استخراج البيانات: ' + (e.message || 'خطأ غير معروف'));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText; }
+  }
+}
+
+function setIfPresent(id, value){
+  if(value === undefined || value === null) return;
+  const text = String(value).trim();
+  if(text) document.getElementById(id).value = text;
+}
+
+async function prepareFileForAI(file, category){
+  if(file.type.startsWith('image/')){
+    const dataUrl = await compressImage(file);
+    return { name:file.name, type:'image/jpeg', category, dataUrl };
+  }
+  if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+    if(file.size > 3.5 * 1024 * 1024){
+      throw new Error('ملف PDF كبير. استخدم صورًا للصفحات أو PDF أصغر من 3.5 ميجابايت.');
+    }
+    return { name:file.name, type:'application/pdf', category, dataUrl:await readFileAsDataURL(file) };
+  }
+  throw new Error('نوع ملف غير مدعوم: ' + file.name);
+}
+
+function readFileAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = ()=>reject(new Error('تعذر قراءة الملف ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxSide = 1600;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.78));
+      };
+      img.onerror = ()=>reject(new Error('تعذر فتح الصورة ' + file.name));
+      img.src = reader.result;
+    };
+    reader.onerror = ()=>reject(new Error('تعذر قراءة الصورة ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function showFiles(inputId,listId){
+  const input=document.getElementById(inputId);
+  const list=document.getElementById(listId);
+  list.innerHTML=[...input.files].map(f=>`<span class="file-chip">${f.name}</span>`).join('');
+}
+
+function copyDriver(){
+  if(document.getElementById('sameName').checked){
+    document.getElementById('driver').value=document.getElementById('shipper').value;
+  }
+}
+
+function val(id){ return document.getElementById(id).value.trim(); }
+
+async function saveBooking(){
+  const b={
+    trip:val('trip'),
+    declaration:val('declaration'),
+    shipper:val('shipper'),
+    consignee:val('consignee'),
+    goods:val('goods'),
+    weight:val('weight'),
+    vin:val('vin'),
+    plate:val('plate'),
+    passport:val('passport'),
+    driver:val('driver'),
+    notes:val('notes'),
+    status:'جديد',
+    bookingType:'normal',
+    vesselName:'',
+    isExported:false,
+    exportedAt:null
+  };
+
+  if(!b.declaration && !b.vin){
+    alert('أدخل رقم البيان أو رقم الهيكل على الأقل.');
+    return;
+  }
+
+  const duplicate=bookings.find(x =>
+    (b.declaration && x.declaration===b.declaration) ||
+    (b.vin && x.vin.toUpperCase()===b.vin.toUpperCase())
+  );
+  if(duplicate && !confirm('يوجد حجز سابق بنفس رقم البيان أو رقم الهيكل. هل تريد الحفظ رغم ذلك؟')){
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('bookings')
+    .insert(uiToDb(b))
+    .select()
+    .single();
+
+  if(error){
+    alert('تعذر حفظ الحجز: ' + error.message);
+    return;
+  }
+
+  bookings.unshift(dbToUi(data));
+  clearDraft();
+  ['trip','declaration','shipper','consignee','goods','weight','vin','plate','passport','driver','notes']
+    .forEach(id=>document.getElementById(id).value='');
+  document.getElementById('reviewCard').classList.add('hidden');
+  alert('تم حفظ الحجز بنجاح في قاعدة البيانات السحابية.');
+  showPage('bookings');
+}
+
+function bookingCard(b, selectable=false){
+  return `<div class="booking">
+    ${selectable?`<input type="checkbox" class="export-check" value="${b.id}" style="width:22px;height:22px">`:''}
+    <div class="info">
+      <div class="title">${b.driver || b.shipper || 'حجز بدون اسم'}</div>
+      <div class="meta">البيان: ${b.declaration || '—'} | اللوحة: ${b.plate || '—'} | الرحلة: ${b.trip || '—'}</div>
+      ${!selectable?`<div class="actions">
+        <button class="mini-btn mini-edit" onclick="openEdit(${b.id})">تعديل</button>
+        <button class="mini-btn mini-delete" onclick="deleteBooking(${b.id})">حذف</button>
+      </div>`:''}
+    </div>
+    <span class="badge ${b.status==='تم الإرسال'?'badge-sent':'badge-new'}">${b.status}</span>
+  </div>`;
+}
+
+function renderAll(){
+  const countAll = document.getElementById('countAll');
+  if(countAll) countAll.textContent=bookings.length;
+  const countNew = document.getElementById('countNew');
+  if(countNew) countNew.textContent=bookings.filter(b=>b.status!=='تم الإرسال').length;
+
+  const bookingsList = document.getElementById('bookingsList');
+  if(bookingsList) bookingsList.innerHTML=bookings.length?bookings.map(b=>bookingCard(b)).join(''):'<div class="notice">لا توجد حجوزات بعد.</div>';
+
+  const exportList = document.getElementById('exportList');
+  if(exportList) exportList.innerHTML=bookings.length?bookings.map(b=>bookingCard(b,true)).join(''):'<div class="notice">لا توجد حجوزات للتصدير.</div>';
+
+  renderSearch();
+}
+
+function renderSearch(){
+  const box=document.getElementById('searchInput');
+  if(!box) return;
+  const q=box.value.trim().toLowerCase();
+  const filtered=bookings.filter(b=>Object.values(b).join(' ').toLowerCase().includes(q));
+  document.getElementById('searchList').innerHTML=filtered.map(b=>bookingCard(b)).join('') || '<div class="notice">لا توجد نتائج.</div>';
+}
+
+async function exportSelected(shareAfter=false){
+  const ids=[...document.querySelectorAll('.export-check:checked')].map(x=>Number(x.value));
+  if(!ids.length){
+    alert('حدد حجزًا واحدًا على الأقل.');
+    return;
+  }
+
+  if(typeof XLSX==='undefined'){
+    alert('تعذر تحميل أداة Excel. تأكد من اتصال الإنترنت ثم افتح الملف مرة أخرى.');
+    return;
+  }
+
+  const selected=bookings.filter(b=>ids.includes(b.id));
+  const rows=selected.map(b=>({
+    'الشاحن':b.shipper || '',
+    'المستلم':b.consignee || '',
+    'وصف البضاعة':b.goods || '',
+    'الوزن':b.weight || '',
+    'رقم البيان':b.declaration || '',
+    'رقم الهيكل':b.vin || '',
+    'رقم اللوحة':b.plate || '',
+    'رقم الجواز':b.passport || '',
+    'اسم السائق':b.driver || ''
+  }));
+
+  const ws=XLSX.utils.json_to_sheet(rows,{
+    header:['الشاحن','المستلم','وصف البضاعة','الوزن','رقم البيان','رقم الهيكل','رقم اللوحة','رقم الجواز','اسم السائق']
+  });
+  ws['!cols']=[
+    {wch:25},{wch:25},{wch:35},{wch:12},{wch:18},
+    {wch:24},{wch:16},{wch:18},{wch:28}
+  ];
+  ws['!views']=[{rightToLeft:true}];
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'ملف الوكيل');
+
+  let name=(document.getElementById('exportFileName').value || 'حجوزات الوكيل').trim();
+  name=name.replace(/[\\/:*?"<>|]/g,'-');
+  const filename=`${name}.xlsx`;
+  const data=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const file=new File([data],filename,{
+    type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+
+  if(shareAfter && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file],title:name,text:'ملف حجوزات الوكيل'});
+    }catch(e){
+      if(e.name!=='AbortError'){
+        alert('تعذرت المشاركة المباشرة، سيتم تنزيل الملف بدلًا منها.');
+        XLSX.writeFile(wb,filename);
+      } else {
+        return;
+      }
+    }
+  }else{
+    XLSX.writeFile(wb,filename);
+    if(shareAfter){
+      alert('المشاركة المباشرة غير مدعومة في هذا المتصفح. تم تنزيل الملف؛ شاركه من مجلد التنزيلات عبر واتساب أو الإيميل.');
+    }
+  }
+
+  const exportedAt = new Date().toISOString();
+  const { error } = await sb
+    .from('bookings')
+    .update({ booking_status:'تم الإرسال', is_exported:true, exported_at:exportedAt, updated_at:exportedAt })
+    .in('id', ids);
+
+  if(error){
+    alert('تم إنشاء الملف، لكن تعذر تحديث حالة الحجوزات في قاعدة البيانات: ' + error.message);
+  }else{
+    bookings=bookings.map(b=>ids.includes(b.id)?{...b,status:'تم الإرسال',isExported:true,exportedAt}:b);
+    renderAll();
+  }
+}
+
+function downloadTextFile(content,filename,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function downloadBackup(){
+  const payload={
+    system:'علام AI سمارت',
+    version:4,
+    exportedAt:new Date().toISOString(),
+    bookings
+  };
+  downloadTextFile(
+    JSON.stringify(payload,null,2),
+    'علام_AI_سمارت_نسخة_احتياطية.json',
+    'application/json;charset=utf-8'
+  );
+}
+
+async function restoreBackup(event){
+  const file=event.target.files[0];
+  if(!file) return;
+
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      const restored=Array.isArray(data)?data:data.bookings;
+      if(!Array.isArray(restored)) throw new Error('invalid');
+
+      const rows = restored.map(b => uiToDb({
+        ...b,
+        status: b.status || 'جديد',
+        bookingType: b.bookingType || 'normal',
+        vesselName: b.vesselName || '',
+        isExported: !!b.isExported,
+        exportedAt: b.exportedAt || null
+      }));
+
+      const { error } = await sb.from('bookings').insert(rows);
+      if(error) throw error;
+
+      await loadBookings();
+      alert('تمت استعادة البيانات إلى قاعدة البيانات السحابية بنجاح.');
+    }catch(e){
+      alert('تعذر استعادة النسخة الاحتياطية: ' + (e.message || 'ملف غير صالح'));
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+const draftFields=[
+  'trip','declaration','shipper','consignee','goods',
+  'weight','vin','plate','passport','driver','notes'
+];
+
+function saveDraft(){
+  const draft={};
+  draftFields.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) draft[id]=el.value;
+  });
+  localStorage.setItem('allamBookingDraft',JSON.stringify(draft));
+}
+
+function loadDraft(){
+  try{
+    const draft=JSON.parse(localStorage.getItem('allamBookingDraft')||'{}');
+    draftFields.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && draft[id]!==undefined) el.value=draft[id];
+    });
+    if(Object.values(draft).some(Boolean)){
+      document.getElementById('reviewCard').classList.remove('hidden');
+    }
+  }catch(e){}
+}
+
+function clearDraft(){
+  localStorage.removeItem('allamBookingDraft');
+}
+
+draftFields.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input',saveDraft);
+});
+
+function openEdit(id){
+  const b=bookings.find(x=>x.id===id);
+  if(!b) return;
+  document.getElementById('editId').value=b.id;
+  document.getElementById('editTrip').value=b.trip || '';
+  document.getElementById('editDeclaration').value=b.declaration || '';
+  document.getElementById('editShipper').value=b.shipper || '';
+  document.getElementById('editConsignee').value=b.consignee || '';
+  document.getElementById('editGoods').value=b.goods || '';
+  document.getElementById('editWeight').value=b.weight || '';
+  document.getElementById('editVin').value=b.vin || '';
+  document.getElementById('editPlate').value=b.plate || '';
+  document.getElementById('editPassport').value=b.passport || '';
+  document.getElementById('editDriver').value=b.driver || '';
+  document.getElementById('editNotes').value=b.notes || '';
+  showPage('edit');
+}
+
+async function saveEdit(){
+  const id=Number(document.getElementById('editId').value);
+  const old=bookings.find(b=>b.id===id);
+  if(!old) return;
+
+  const updated={
+    ...old,
+    trip:document.getElementById('editTrip').value.trim(),
+    declaration:document.getElementById('editDeclaration').value.trim(),
+    shipper:document.getElementById('editShipper').value.trim(),
+    consignee:document.getElementById('editConsignee').value.trim(),
+    goods:document.getElementById('editGoods').value.trim(),
+    weight:document.getElementById('editWeight').value.trim(),
+    vin:document.getElementById('editVin').value.trim(),
+    plate:document.getElementById('editPlate').value.trim(),
+    passport:document.getElementById('editPassport').value.trim(),
+    driver:document.getElementById('editDriver').value.trim(),
+    notes:document.getElementById('editNotes').value.trim(),
+    status:'تم التعديل'
+  };
+
+  const { data, error } = await sb
+    .from('bookings')
+    .update(uiToDb(updated))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if(error){
+    alert('تعذر حفظ التعديل: ' + error.message);
+    return;
+  }
+
+  bookings=bookings.map(b=>b.id===id?dbToUi(data):b);
+  alert('تم حفظ التعديل في قاعدة البيانات.');
+  showPage('bookings');
+}
+
+async function deleteBooking(id){
+  const b=bookings.find(x=>x.id===id);
+  if(!b) return;
+  if(!confirm(`هل تريد حذف الحجز رقم البيان ${b.declaration || 'غير محدد'}؟`)) return;
+
+  const { error } = await sb.from('bookings').delete().eq('id',id);
+  if(error){
+    alert('تعذر حذف الحجز: ' + error.message);
+    return;
+  }
+
+  bookings=bookings.filter(x=>x.id!==id);
+  renderAll();
+}
+
+loadDraft();
+initApp();
+</script>
+</body>
+</html>
