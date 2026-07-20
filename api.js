@@ -59,11 +59,11 @@ export default async function handler(req, res) {
           detail: 'high'
         });
       } else {
-        const commaIndex = file.dataUrl.indexOf(',');
-        const base64 = commaIndex >= 0 ? file.dataUrl.slice(commaIndex + 1) : file.dataUrl;
+        // The Responses API accepts a complete data URL for inline file_data.
+        // Keep the MIME type prefix instead of stripping it to raw base64.
         content.push({
           type: 'input_file',
-          file_data: base64,
+          file_data: file.dataUrl,
           filename: file.name || 'document.pdf'
         });
       }
